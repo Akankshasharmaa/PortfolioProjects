@@ -122,3 +122,48 @@ where dea.continent Is Not NULL
 SELECT *, (RollingPeopleVaccinated/Population)*100
 FROM PercentagePopulationVaccinated;
 
+--Global Vaccination NUmbers
+with VacStats
+AS
+(
+SELECT dea.location, max(dea.population) as Population, max(vac.people_fully_vaccinated) as PeopleFullyVaccinated,
+FROM `data-analysis-project-356709.CovidDataset.CovidDeaths` dea
+Join `data-analysis-project-356709.CovidDataset.CovidVaccinations` vac
+ON dea.location = vac.location and
+ dea.date = vac.date
+where dea.continent Is Not NULL
+group by dea.location
+)
+SELECT sum(VacStats.Population) as TotalPopulation, sum(VacStats.PeopleFullyVaccinated) as TotalPeopleVaccinated, sum(VacStats.PeopleFullyVaccinated)/sum(VacStats.Population)*100 as TotalPercentPopulationVaccinated
+FROM VacStats;
+
+-- Break down per continent 
+with VacStats
+AS
+(
+SELECT location, continent, max(vac.people_fully_vaccinated) as PeopleFullyVaccinated,
+FROM`data-analysis-project-356709.CovidDataset.CovidVaccinations` vac
+where continent Is Not NULL
+group by location, continent
+)
+SELECT VacStats.continent, sum(VacStats.PeopleFullyVaccinated) as PopulationVaccinated
+FROM VacStats
+GROUP BY VacStats.continent
+order by PopulationVaccinated desc;
+
+-- Highest vaccinated people number
+with VacStats
+AS
+(
+SELECT dea.location, max(dea.population) as Population, max(vac.people_fully_vaccinated) as PeopleFullyVaccinated, 
+FROM `data-analysis-project-356709.CovidDataset.CovidDeaths` dea
+Join `data-analysis-project-356709.CovidDataset.CovidVaccinations` vac 
+ON dea.location = vac.location and
+  dea.date = vac.date
+where dea.continent Is Not NULL and dea.continent = 'Asia'
+group by dea.location
+)
+
+SELECT *, (VacStats.PeopleFullyVaccinated/VacStats.Population)*100 as PercentPopulationVaccinated
+FROM VacStats
+order by PercentPopulationVaccinated;
